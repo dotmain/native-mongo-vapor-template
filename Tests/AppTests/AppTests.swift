@@ -2,14 +2,17 @@
 import XCTVapor
 
 final class AppTests: XCTestCase {
-    func testHelloWorld() throws {
+    func testFetchKittens() throws {
         let app = Application(.testing)
-        defer { app.shutdown() }
+        defer {
+            app.mongoDB.cleanup()
+            app.shutdown()
+        }
         try configure(app)
+        try app.mongoDB.configure("mongodb://localhost:27017")
 
-        try app.test(.GET, "hello", afterResponse: { res in
+        try app.test(.GET, "", afterResponse: { res in
             XCTAssertEqual(res.status, .ok)
-            XCTAssertEqual(res.body.string, "Hello, world!")
         })
     }
 }

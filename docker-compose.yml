@@ -9,22 +9,19 @@
 # Learn more: https://docs.docker.com/compose/reference/
 #
 #   Build images: docker-compose build
-#      Start app: docker-compose up app{{#fluent}}{{^db.is_sqlite}}
-# Start database: docker-compose up db
-# Run migrations: docker-compose run migrate{{/db.is_sqlite}}{{/fluent}}
-#       Stop all: docker-compose down{{#fluent}}{{^db.is_sqlite}} (add -v to wipe db){{/db.is_sqlite}}{{/fluent}}
+#      Start app: docker-compose up app{{#mongo_native}}
+# Start database: docker-compose up db 
+# Run migrations: docker-compose run migrate{{/mongo_native}} 
+#       Stop all: docker-compose down {{#mongo_native}} (add -v to wipe db){{/mongo_native}}
 #
-version: '3.7'{{#fluent}}{{^db.is_sqlite}}
+version: '3.7'{{#mongo_native}}
 
 volumes:
-  db_data:{{/db.is_sqlite}}{{/fluent}}
+  db_data:{{/mongo_native}}
 
 x-shared_environment: &shared_environment
-  LOG_LEVEL: ${LOG_LEVEL:-debug}{{#fluent}}{{^db.is_sqlite}}
-  DATABASE_HOST: db
-  DATABASE_NAME: vapor_database
-  DATABASE_USERNAME: vapor_username
-  DATABASE_PASSWORD: vapor_password{{/db.is_sqlite}}{{/fluent}}
+  LOG_LEVEL: ${LOG_LEVEL:-debug}{{#mongo_native}}
+  DATABASE_URL: mongodb://db:27017/vapor_database{{/mongo_native}}
   
 services:
   app:
@@ -32,22 +29,21 @@ services:
     build:
       context: .
     environment:
-      DATABASE_URL: mongodb://db:27017/vapor_database
-      <<: *shared_environment{{#fluent}}{{^db.is_sqlite}}
+      <<: *shared_environment{{#mongo_native}}
     depends_on:
-      - db{{/db.is_sqlite}}{{/fluent}}
+      - db{{/mongo_native}}
     ports:
       - '8080:8080'
     # user: '0' # uncomment to run as root for testing purposes even though Dockerfile defines 'vapor' user.
-    command: ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "8080"]{{#fluent}}
+    command: ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "8080"]{{#mongo_native}}
   migrate:
     image: {{name_kebab}}:latest
     build:
       context: .
     environment:
-      <<: *shared_environment{{^db.is_sqlite}}
+      <<: *shared_environment
     depends_on:
-      - db{{/db.is_sqlite}}
+      - db
     command: ["migrate", "--yes"]
     deploy:
       replicas: 0
@@ -56,38 +52,16 @@ services:
     build:
       context: .
     environment:
-      <<: *shared_environment{{^db.is_sqlite}}
+      <<: *shared_environment
     depends_on:
-      - db{{/db.is_sqlite}}
+      - db
     command: ["migrate", "--revert", "--yes"]
     deploy:
-      replicas: 0{{#db.is_postgres}}
-  db:
-    image: postgres:12-alpine
-    volumes:
-      - db_data:/var/lib/postgresql/data/pgdata
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: vapor_username
-      POSTGRES_PASSWORD: vapor_password
-      POSTGRES_DB: vapor_database
-    ports:
-      - '5432:5432'{{/db.is_postgres}}{{#db.is_mysql}}
-  db:
-    image: mysql:8.0
-    volumes:
-      - db_data:/var/lib/mysql
-    environment:
-      MYSQL_USER: vapor_username
-      MYSQL_PASSWORD: vapor_password
-      MYSQL_DATABASE: vapor_database
-      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
-    ports:
-      - '3306:3306'{{/db.is_mysql}}{{#db.is_mongo}}
+      replicas: 0
   db:
     image: mongo:latest
     volumes:
       - db_data:/data/db
     restart: unless-stopped
     ports:
-      - '27017:27017'{{/db.is_mongo}}{{/fluent}}
+      - '27017:27017'{{/mongo_native}}

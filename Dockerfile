@@ -6,10 +6,9 @@ FROM swift:5.4-focal as build
 # Install OS updates and, if needed, sqlite3
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get -q update \
-    && apt-get -q dist-upgrade -y {{#fluent.db.is_sqlite}}\
-    && apt-get install -y libsqlite3-dev {{/fluent.db.is_sqlite}}\
-    && rm -rf /var/lib/apt/lists/*
-
+    && apt-get -q dist-upgrade -y \
+    && rm -rf /var/lib/apt/lists/* {{#mongo_native}}\
+    && apt-get update && apt-get install -y libssl-dev {{/mongo_native}}
 # Set up a build area
 WORKDIR /build
 

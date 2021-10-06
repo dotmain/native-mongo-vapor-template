@@ -1,35 +1,30 @@
-{{#fluent}}import Fluent
-import Fluent{{fluent.db.module}}Driver
-{{/fluent}}{{#leaf}}import Leaf
-{{/leaf}}import Vapor
+{{#leaf}}import Leaf{{/leaf}}
+{{#mongo_native}}import MongoDBVapor{{/mongo_native}}
+import Vapor
 
-// configures your application
+/// Configures the application.
 public func configure(_ app: Application) throws {
-    // uncomment to serve files from /Public folder
-    // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory)){{#fluent}}
+    // Uncomment to serve files from the /Public folder.
+    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    
+    // Use LeafRenderer for views.
+    {{#leaf}}app.views.use(.leaf){{/leaf}}
+    
+    {{#mongo_native}}
+    // Configure the app to connect to a MongoDB deployment. If a connection string is provided via the `MONGODB_URI`
+    // environment variable it will be used; otherwise, use the default connection string for a local MongoDB server.
+    try app.mongoDB.configure(Environment.get("MONGODB_URI") ?? "mongodb://localhost:27017")
 
-    {{#fluent.db.is_postgres}}app.databases.use(.postgres(
-        hostname: Environment.get("DATABASE_HOST") ?? "localhost",
-        port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? PostgresConfiguration.ianaPortNumber,
-        username: Environment.get("DATABASE_USERNAME") ?? "vapor_username",
-        password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
-        database: Environment.get("DATABASE_NAME") ?? "vapor_database"
-    ), as: .psql){{/fluent.db.is_postgres}}{{#fluent.db.is_mysql}}app.databases.use(.mysql(
-        hostname: Environment.get("DATABASE_HOST") ?? "localhost",
-        port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? MySQLConfiguration.ianaPortNumber,
-        username: Environment.get("DATABASE_USERNAME") ?? "vapor_username",
-        password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
-        database: Environment.get("DATABASE_NAME") ?? "vapor_database"
-    ), as: .mysql){{/fluent.db.is_mysql}}{{#fluent.db.is_mongo}}try app.databases.use(.mongo(
-        connectionString: Environment.get("DATABASE_URL") ?? "mongodb://localhost:27017/vapor_database"
-    ), as: .mongo){{/fluent.db.is_mongo}}{{#fluent.db.is_sqlite}}app.databases.use(.sqlite(.file("db.sqlite")), as: .sqlite){{/fluent.db.is_sqlite}}
+    // Use `ExtendedJSONEncoder` and `ExtendedJSONDecoder` for encoding/decoding `Content`. We use extended JSON both
+    // here and on the frontend to ensure all MongoDB type information is correctly preserved.
+    // See: https://docs.mongodb.com/manual/reference/mongodb-extended-json
+    // Note that for _encoding_ content, this encoder only gets used for the REST API methods, since Leaf uses its own
+    // custom encoder to encode data for rendering in Leaf views.
+    ContentConfiguration.global.use(encoder: ExtendedJSONEncoder(), for: .json)
+    ContentConfiguration.global.use(decoder: ExtendedJSONDecoder(), for: .json) {{/mongo_native}}
 
-    app.migrations.add(CreateTodo()){{/fluent}}{{#leaf}}
 
-    app.views.use(.leaf)
-
-    {{/leaf}}
-
-    // register routes
+   
+    // Register routes.
     try routes(app)
 }

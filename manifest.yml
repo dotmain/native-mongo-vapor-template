@@ -1,45 +1,8 @@
 name: Vapor Template
 variables:
-  - name: fluent
-    description: Would you like to use Fluent?
-    type: nested
-    variables:
-      - name: db
-        description: Which database would you like to use?
-        type: option
-        options:
-          - name: Postgres (Recommended)
-            description: ""
-            data:
-              module: Postgres
-              url: postgres
-              id: psql
-              version: "2.0.0"
-              is_postgres: true
-          - name: MySQL
-            description: ""
-            data:
-              module: MySQL
-              url: mysql
-              id: mysql
-              version: "4.0.0"
-              is_mysql: true
-          - name: SQLite
-            description: ""
-            data:
-              module: SQLite
-              url: sqlite
-              id: sqlite
-              version: "4.0.0"
-              is_sqlite: true
-          - name: Mongo
-            description: ""
-            data:
-              module: Mongo
-              url: mongo
-              id: mongo
-              version: "1.0.0"
-              is_mongo: true
+  - name: mongo_native
+    description: Would you like to use Mongo Native?
+    type: bool
   - name: leaf
     description: Would you like to use Leaf?
     type: bool
@@ -50,26 +13,14 @@ files:
     files:
       - folder: Run
         files:
-          - main.swift
+          - file: main.swift
+            dynamic: true
       - folder: App
         files:
           - file: configure.swift
             dynamic: true
           - file: routes.swift
             dynamic: true
-          - folder: Models
-            if: fluent
-            files:
-              - Todo.swift
-          - folder: Migrations
-            if: fluent
-            files:
-              - CreateTodo.swift
-          - folder: Controllers
-            files:
-              - .gitkeep
-              - file: TodoController.swift
-                if: fluent
   - folder: Tests
     files:
       - folder: AppTests
