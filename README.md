@@ -1,8 +1,19 @@
+
+Create a new project with vapor cli:
+
+```vapor new MyProject --template https://github.com/dotmain/native-mongo-vapor-template```
+ 
+```cd MyProject```
+
 Available scripts:
-    ```make build```
-    ```make run```
-    ```make stop```
-    ```make clean```
+
+```make build```
+
+```make run```
+
+```make down```
+
+```make clean```
 
 <p align="center">
     <img src="https://user-images.githubusercontent.com/1342803/36623515-7293b4ec-18d3-11e8-85ab-4e2f8fb38fbd.png" width="320" alt="Vapor Template">

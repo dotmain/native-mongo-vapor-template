@@ -1,5 +1,5 @@
 build:
-	docker-compose build
+	docker-compose build 
 
 run:
 	docker-compose up app

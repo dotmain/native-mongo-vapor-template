@@ -36,5 +36,7 @@ files:
     dynamic: true
   - file: docker-compose.yml
     dynamic: true
+  - Makefile
   - .gitignore
   - .dockerignore
+
